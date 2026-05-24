@@ -46,6 +46,18 @@ def main():
             print(f"Confidence: {result['confidence']:.4f}")
             print("-----------------------------------")
             
+            print("\n--- Attention Keyword Importance ---")
+            attention = result.get("attention", {})
+            if attention:
+                sorted_keywords = sorted(attention.items(), key=lambda x: x[1], reverse=True)[:5]
+                print(f"{'Keyword':<20} | {'Normalized Weight':<20}")
+                print("-" * 43)
+                for kw, score in sorted_keywords:
+                    print(f"{kw:<20} | {score:<20.4f}")
+            else:
+                print("No attention explanation available.")
+            print("-----------------------------------")
+            
             print("\n--- Extracted Named Entities ---")
             if entities:
                 print(f"{'Entity Text':<30} | {'Label':<10} | {'Offsets':<10}")

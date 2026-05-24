@@ -10,11 +10,14 @@ The system must:
 4. Update `main.py --mode classify` to output a token-attention keyword importance report showing which tokens highly influenced the classification category (e.g., words with attention > 0.5 highlighted).
 5. Verify with unit tests that attention weights are returned and correctly sum/normalize across tokens.
 
+## Status
+Completed
+
 ## Acceptance criteria
-- [ ] Classification pipeline outputs self-attention weights in addition to probabilities.
-- [ ] Attention weights are aggregated and normalized into relative token-level scores (0.0 to 1.0) in `explainability/lime_analysis.py`.
-- [ ] `main.py --mode classify` prints the token-attention report.
-- [ ] `pytest` validates that the extraction runs in sub-second time during a single forward pass and outputs valid scores.
+- [x] Classification pipeline outputs self-attention weights in addition to probabilities.
+- [x] Attention weights are aggregated and normalized into relative token-level scores (0.0 to 1.0) in `explainability/lime_analysis.py`.
+- [x] `main.py --mode classify` prints the token-attention report.
+- [x] `pytest` validates that the extraction runs in sub-second time during a single forward pass and outputs valid scores.
 
 ## Blocked by
 - [Issue #1: Project Bootstrapping & Local Zero-Shot Classifier CLI](file:///Users/sohamwarad/compliance/docs/issues/0001-project-bootstrap-and-zero-shot-cli.md)

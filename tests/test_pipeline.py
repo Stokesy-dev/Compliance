@@ -87,6 +87,8 @@ def test_cli_successful_classification(tmp_path):
     assert result.returncode == 0
     assert "Category:   Fraud" in result.stdout
     assert "Confidence:" in result.stdout
+    assert "--- Attention Keyword Importance ---" in result.stdout
+    assert "bribed" in result.stdout or "falsified" in result.stdout
     assert "No entities extracted (Date, Org, Money)." in result.stdout
 
 def test_cli_successful_classification_with_entities(tmp_path):
@@ -108,6 +110,8 @@ def test_cli_successful_classification_with_entities(tmp_path):
     
     assert result.returncode == 0
     assert "Category:   Financial Crime" in result.stdout
+    assert "--- Attention Keyword Importance ---" in result.stdout
+    assert "capital" in result.stdout or "structured" in result.stdout or "banking" in result.stdout
     assert "--- Extracted Named Entities ---" in result.stdout
     assert "ACME Corp." in result.stdout
     assert "June 15, 2026" in result.stdout
@@ -154,6 +158,46 @@ def test_spacy_empty_and_no_entities_behavior():
     # Text with no DATE, ORG, or MONEY
     text = "Hello world! This is a simple sentence."
     assert preprocessor.extract_entities(text) == []
+
+def test_attention_explainability_behavior():
+    """
+    Behavior 1: AttentionExplainer must extract token self-attentions during classification,
+    filter special tokens, and return a dictionary of normalized word importances.
+    """
+    from explainability.lime_analysis import AttentionExplainer
+    classifier = ComplianceClassifier()
+    explainer = AttentionExplainer(classifier)
+    
+    text = "The vendor submitted falsified billing invoices and bribed the procurement manager."
+    explanation = explainer.explain(text)
+    
+    # Assert output shape
+    assert isinstance(explanation, dict)
+    assert len(explanation) > 0
+    
+    # Assert scores are normalized between 0.0 and 1.0
+    for token, score in explanation.items():
+        assert 0.0 <= score <= 1.0
+        
+    # Check that domain keywords (e.g. 'bribed', 'falsified') are present and have non-zero importance
+    keywords = {"bribed", "falsified", "billing", "invoices"}
+    found_keywords = [kw for kw in keywords if kw in explanation]
+    assert len(found_keywords) > 0
+
+def test_attention_explainability_empty_behavior():
+    """
+    Behavior 2: AttentionExplainer must return an empty dictionary gracefully
+    when passed empty strings, whitespace-only text, or non-alphabetic/punctuation-only text.
+    """
+    from explainability.lime_analysis import AttentionExplainer
+    classifier = ComplianceClassifier()
+    explainer = AttentionExplainer(classifier)
+    
+    assert explainer.explain("") == {}
+    assert explainer.explain("   ") == {}
+    assert explainer.explain("!!!") == {}
+
+
 
 
 

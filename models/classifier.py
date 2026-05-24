@@ -14,7 +14,10 @@ class ComplianceClassifier:
             # Load fine-tuned DistilBERT checkpoint (Slice 5 implementation)
             from transformers import AutoModelForSequenceClassification, AutoTokenizer
             self.tokenizer = AutoTokenizer.from_pretrained(checkpoint_dir)
-            self.model = AutoModelForSequenceClassification.from_pretrained(checkpoint_dir)
+            self.model = AutoModelForSequenceClassification.from_pretrained(
+                checkpoint_dir, 
+                attn_implementation="eager"
+            )
             self.pipeline = None
         else:
             # Load Zero-Shot Fallback
@@ -26,14 +29,20 @@ class ComplianceClassifier:
             else:
                 device = "cpu"
                 
-            # Load BART large MNLI zero-shot pipeline
+            # Load BART large MNLI zero-shot pipeline with eager attention
             self.pipeline = pipeline(
                 "zero-shot-classification", 
                 model="facebook/bart-large-mnli", 
-                device=device
+                device=device,
+                model_kwargs={"attn_implementation": "eager"}
             )
             
     def classify(self, text: str) -> dict:
+        # Dynamically import to avoid circular dependency
+        from explainability.lime_analysis import AttentionExplainer
+        explainer = AttentionExplainer(self)
+        attention_scores = explainer.explain(text)
+        
         if self.has_custom_checkpoint:
             # Custom model inference
             inputs = self.tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
@@ -45,7 +54,7 @@ class ComplianceClassifier:
             return {
                 "category": self.labels[max_idx],
                 "confidence": probs[max_idx],
-                "attention": {}
+                "attention": attention_scores
             }
         else:
             # Zero-shot classification
@@ -55,5 +64,5 @@ class ComplianceClassifier:
             return {
                 "category": best_label,
                 "confidence": float(best_score),
-                "attention": {}
+                "attention": attention_scores
             }
