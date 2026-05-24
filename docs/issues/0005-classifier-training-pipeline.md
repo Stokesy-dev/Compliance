@@ -11,11 +11,14 @@ The system must:
 5. Ensure the inference engine updates to automatically load the custom **Model Checkpoint** from `models/checkpoints/best_model/` rather than the zero-shot pipeline when present.
 6. Write unit tests confirming that `load_dataset` downloads, maps, and structures inputs correctly.
 
+## Status
+Completed
+
 ## Acceptance criteria
-- [ ] LexGLUE dataset downloads and filters cleanly to our three custom classes.
-- [ ] Running `python main.py --mode train` executes the fine-tuning trainer loop and outputs a checkpoint model in `models/checkpoints/best_model/`.
-- [ ] Subsequent runs of `main.py --mode classify` seamlessly load the newly created custom DistilBERT model.
-- [ ] `pytest` validates data mappings and training loop initiation on a tiny dummy subset.
+- [x] LexGLUE dataset downloads and filters cleanly to our three custom classes.
+- [x] Running `python main.py --mode train` executes the fine-tuning trainer loop and outputs a checkpoint model in `models/checkpoints/best_model/`.
+- [x] Subsequent runs of `main.py --mode classify` seamlessly load the newly created custom DistilBERT model.
+- [x] `pytest` validates data mappings and training loop initiation on a tiny dummy subset.
 
 ## Blocked by
 - [Issue #1: Project Bootstrapping & Local Zero-Shot Classifier CLI](file:///Users/sohamwarad/compliance/docs/issues/0001-project-bootstrap-and-zero-shot-cli.md)

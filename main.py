@@ -74,8 +74,17 @@ def main():
             sys.exit(1)
             
     elif args.mode == "train":
-        print("Training mode is not yet implemented. Run this in Slice 5.")
-        sys.exit(0)
+        print("Initializing classifier training sequence...")
+        try:
+            from models.classifier import train_classifier
+            train_classifier()
+            print("\n--- Model Training Completed Successfully ---")
+            print("Best model checkpoint saved to: models/checkpoints/best_model/")
+            print("---------------------------------------------")
+            sys.exit(0)
+        except Exception as e:
+            print(f"Error: Model training failed: {e}")
+            sys.exit(1)
     elif args.mode == "query":
         if not args.question:
             print("Error: --question <question_text> is required in query mode.")

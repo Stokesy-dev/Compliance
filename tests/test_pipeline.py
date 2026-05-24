@@ -342,6 +342,84 @@ def test_cli_query_successful_run(tmp_path):
     except Exception:
         pass
 
+def test_dataset_mapping_behavior():
+    """
+    Behavior 1: load_and_map_dataset must download the SCOTUS dataset,
+    filter relevant issue categories, and deterministic map to labels {0, 1, 2}.
+    """
+    from data.load_dataset import load_and_map_dataset
+    
+    # We will test dataset mapping on a tiny slice to keep tests blazingly fast
+    dataset = load_and_map_dataset(tiny_slice=True)
+    
+    assert "train" in dataset
+    assert "validation" in dataset
+    
+    # Check that labels are mapped and contain only 0, 1, or 2
+    train_labels = dataset["train"]["label"]
+    unique_labels = set(train_labels)
+    assert unique_labels.issubset({0, 1, 2})
+
+def test_classifier_training_and_checkpoint_loading(tmp_path):
+    """
+    Behavior 2: train_classifier must successfully compile and execute a fine-tuning epoch on a tiny dataset
+    and serialize model weights on disk.
+    Behavior 3: ComplianceClassifier must auto-load this custom checkpoint and return predictions.
+    """
+    import os
+    from datasets import Dataset, DatasetDict
+    from models.classifier import train_classifier, ComplianceClassifier
+    
+    # 1. Create a tiny mock dataset
+    mock_data = {
+        "text": [
+            "We indictment money laundering offshore evade disclose.",
+            "bribery invoice procurement manager falsified off-the-books payments.",
+            "environmental statutory carbon discharge limit breach regulatory agency EPA rules."
+        ],
+        "label": [0, 1, 2]
+    }
+    ds = Dataset.from_dict(mock_data)
+    tiny_dataset = DatasetDict({"train": ds, "validation": ds})
+    
+    checkpoint_dir = str(tmp_path / "best_model")
+    
+    # 2. Run fast training compile test (1 epoch, batch size 1)
+    train_classifier(output_dir=checkpoint_dir, epochs=1, batch_size=1, tiny_dataset=tiny_dataset)
+    
+    # Assert checkpoint files are saved on disk
+    assert os.path.exists(os.path.join(checkpoint_dir, "config.json"))
+    assert os.path.exists(os.path.join(checkpoint_dir, "model.safetensors")) or os.path.exists(os.path.join(checkpoint_dir, "pytorch_model.bin"))
+    
+    # 3. Assert Behavior 3: ComplianceClassifier seamlessly auto-loads custom checkpoint
+    classifier = ComplianceClassifier(checkpoint_dir=checkpoint_dir)
+    assert classifier.has_custom_checkpoint is True
+    assert classifier.pipeline is None  # Zero-shot pipeline is disabled
+    
+    # Test inference using the custom loaded checkpoint
+    res = classifier.classify("money laundering offshore evade")
+    assert "category" in res
+    assert "confidence" in res
+    assert "attention" in res
+
+def test_cli_train_execution():
+    """
+    Behavior 4: Running the CLI train mode must invoke the trainer and exit gracefully.
+    """
+    import pytest
+    from unittest.mock import patch
+    from main import main
+    
+    with patch("sys.argv", ["main.py", "--mode", "train"]):
+        with patch("models.classifier.train_classifier") as mock_train:
+            with pytest.raises(SystemExit) as excinfo:
+                main()
+            assert excinfo.value.code == 0
+            mock_train.assert_called_once()
+
+
+
+
 
 
 
