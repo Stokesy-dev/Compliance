@@ -87,6 +87,32 @@ def test_cli_successful_classification(tmp_path):
     assert result.returncode == 0
     assert "Category:   Fraud" in result.stdout
     assert "Confidence:" in result.stdout
+    assert "No entities extracted (Date, Org, Money)." in result.stdout
+
+def test_cli_successful_classification_with_entities(tmp_path):
+    """
+    Behavior 3: Running the CLI with a valid file containing entities must list them cleanly in a table format.
+    """
+    import subprocess
+    import sys
+    
+    # Write a test file containing entities
+    test_file = tmp_path / "test_doc_ent.txt"
+    test_file.write_text(
+        "On June 15, 2026, ACME Corp. lost $5,000,000 in structured banking capital."
+    )
+    
+    python_bin = sys.executable
+    cmd = [python_bin, "main.py", "--mode", "classify", "--input", str(test_file)]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    assert result.returncode == 0
+    assert "Category:   Financial Crime" in result.stdout
+    assert "--- Extracted Named Entities ---" in result.stdout
+    assert "ACME Corp." in result.stdout
+    assert "June 15, 2026" in result.stdout
+    assert "5,000,000" in result.stdout
+
 
 def test_spacy_entity_extraction_behavior():
     """
@@ -108,11 +134,27 @@ def test_spacy_entity_extraction_behavior():
     # "$5,000,000" as MONEY
     assert ("June 15, 2026", "DATE") in extracted
     assert ("ACME Corp.", "ORG") in extracted
-    assert ("$5,000,000", "MONEY") in extracted
+    assert ("5,000,000", "MONEY") in extracted
     
     # Verify offsets correspond to the text
     for ent in entities:
         assert text[ent["start"]:ent["end"]] == ent["text"]
+
+def test_spacy_empty_and_no_entities_behavior():
+    """
+    Behavior 2: CompliancePreprocessor should return an empty list [] gracefully
+    when passed empty text, whitespace-only text, or text without target entities.
+    """
+    from preprocessing.nlp_pipeline import CompliancePreprocessor
+    preprocessor = CompliancePreprocessor()
+    
+    assert preprocessor.extract_entities("") == []
+    assert preprocessor.extract_entities("   ") == []
+    
+    # Text with no DATE, ORG, or MONEY
+    text = "Hello world! This is a simple sentence."
+    assert preprocessor.extract_entities(text) == []
+
 
 
 

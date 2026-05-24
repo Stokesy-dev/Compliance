@@ -35,12 +35,30 @@ def main():
         try:
             classifier = ComplianceClassifier()
             result = classifier.classify(text)
+            
+            # Extract Named Entities in parallel
+            from preprocessing.nlp_pipeline import CompliancePreprocessor
+            preprocessor = CompliancePreprocessor()
+            entities = preprocessor.extract_entities(text)
+            
             print("\n--- Compliance Analysis Results ---")
             print(f"Category:   {result['category']}")
             print(f"Confidence: {result['confidence']:.4f}")
             print("-----------------------------------")
+            
+            print("\n--- Extracted Named Entities ---")
+            if entities:
+                print(f"{'Entity Text':<30} | {'Label':<10} | {'Offsets':<10}")
+                print("-" * 56)
+                for ent in entities:
+                    offsets = f"{ent['start']}-{ent['end']}"
+                    print(f"{ent['text']:<30} | {ent['label']:<10} | {offsets:<10}")
+            else:
+                print("No entities extracted (Date, Org, Money).")
+            print("-----------------------------------")
+            
         except Exception as e:
-            print(f"Error: Classification failed: {e}")
+            print(f"Error: Classification or Entity Extraction failed: {e}")
             sys.exit(1)
             
     elif args.mode == "train":

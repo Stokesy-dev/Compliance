@@ -9,12 +9,15 @@ The system must:
 3. Output the predicted compliance risk category (**Financial Crime**, **Fraud**, or **Regulatory Breach**) along with the model's confidence score to the console.
 4. Set up an initial test framework using `pytest` to verify this zero-shot path works out-of-the-box.
 
+## Status
+Completed
+
 ## Acceptance criteria
-- [ ] Core directory structure created (`data/`, `models/`, `preprocessing/`, `explainability/`, `dashboard/`, `tests/`).
-- [ ] `requirements.txt` includes `transformers`, `torch`, `scikit-learn`, `pytest`, `pandas`, `numpy`.
-- [ ] Running `python main.py --mode classify --input path/to/text.txt` loads the Zero-Shot fallback, successfully runs classification, and prints the predicted category and confidence.
-- [ ] Baseline test `tests/test_pipeline.py` verifies that zero-shot classification maps raw text to the three target categories cleanly.
-- [ ] Code complies with all defined domain glossary terms in `CONTEXT.md` and respects `ADR 0004`.
+- [x] Core directory structure created (`data/`, `models/`, `preprocessing/`, `explainability/`, `dashboard/`, `tests/`).
+- [x] `requirements.txt` includes `transformers`, `torch`, `scikit-learn`, `pytest`, `pandas`, `numpy`.
+- [x] Running `python main.py --mode classify --input path/to/text.txt` loads the Zero-Shot fallback, successfully runs classification, and prints the predicted category and confidence.
+- [x] Baseline test `tests/test_pipeline.py` verifies that zero-shot classification maps raw text to the three target categories cleanly.
+- [x] Code complies with all defined domain glossary terms in `CONTEXT.md` and respects `ADR 0004`.
 
 ## Blocked by
 None - can start immediately
