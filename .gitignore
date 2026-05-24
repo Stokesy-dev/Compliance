@@ -1,0 +1,30 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Python Cache & Compiled Files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Deep Learning Models & Large Weights
+models/checkpoints/
+*.bin
+*.pt
+*.pth
+*.h5
+
+# Vector Store Indices & Local Databases
+data/faiss_index/
+*.faiss
+*.pkl
+
+# Logs & Temporary Files
+*.log
+.DS_Store
+.cache/
+.huggingface/
