@@ -418,14 +418,21 @@ def test_cli_train_execution():
             mock_train.assert_called_once()
 
 
-
-
-
-
-
-
-
-
-
-
+def test_streamlit_app_syntax():
+    """
+    Behavior 5: Test that the Streamlit dashboard app syntactically compiles successfully using AST parser.
+    """
+    import ast
+    import os
+    
+    app_path = os.path.join(os.path.dirname(__file__), "../dashboard/streamlit_app.py")
+    assert os.path.exists(app_path), "streamlit_app.py does not exist at expected path."
+    
+    with open(app_path, "r", encoding="utf-8") as f:
+        content = f.read()
+        
+    try:
+        ast.parse(content)
+    except SyntaxError as e:
+        pytest.fail(f"streamlit_app.py failed syntax parsing check: {e}")
 

@@ -10,11 +10,11 @@ The dashboard must feature 4 fully functional tabs:
 4. **Tab 4 — Model Performance Metrics**: Visualizes trainer metrics including F1-score progress, training loss, and an interactive confusion matrix for compliance officers to audit the model's metrics.
 
 ## Acceptance criteria
-- [ ] Aesthetic interface uses premium HSL colors, modern typography (e.g. Outfit/Inter), and contains zero plain black/white or default Streamlit styling.
-- [ ] Uploading a file updates Tab 1, Tab 2, and indexes the document into the RAG vector store for Tab 3 instantly.
-- [ ] Explainability highlights (Tab 1) and spaCy entities (Tab 2) render correctly.
-- [ ] RAG Chat bot responds gracefully (supporting both Groq API and the local fallback generator).
-- [ ] Running `streamlit run dashboard/streamlit_app.py` executes cleanly without warning banners.
+- [x] Aesthetic interface uses premium HSL colors, modern typography (e.g. Outfit/Inter), and contains zero plain black/white or default Streamlit styling.
+- [x] Uploading a file updates Tab 1, Tab 2, and indexes the document into the RAG vector store for Tab 3 instantly.
+- [x] Explainability highlights (Tab 1) and spaCy entities (Tab 2) render correctly.
+- [x] RAG Chat bot responds gracefully (supporting both Groq API and the local fallback generator).
+- [x] Running `streamlit run dashboard/streamlit_app.py` executes cleanly without warning banners.
 
 ## Blocked by
 - [Issue #2: spaCy Named Entity Recognition Preprocessing Pipeline](file:///Users/sohamwarad/compliance/docs/issues/0002-spacy-ner-pipeline.md)
