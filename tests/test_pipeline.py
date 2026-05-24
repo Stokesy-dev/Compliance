@@ -197,6 +197,155 @@ def test_attention_explainability_empty_behavior():
     assert explainer.explain("   ") == {}
     assert explainer.explain("!!!") == {}
 
+def test_rag_ingestion_and_persistence_behavior(tmp_path):
+    """
+    Behavior 1: ComplianceRAG must chunk text, generate sentence embeddings,
+    and build a persistent FAISS index folder on disk.
+    """
+    import os
+    from models.rag_pipeline import ComplianceRAG
+    
+    # Use temporary directory for testing persistent FAISS
+    index_dir = str(tmp_path / "faiss_index")
+    rag = ComplianceRAG(index_dir=index_dir)
+    
+    text = (
+        "Under Section 402 of the Federal Clean Water Standard, the statutory carbon "
+        "discharge limits are set at a maximum of 50 parts per million. Any corporate "
+        "facility violating this rule is subject to administrative warnings and immediate "
+        "remediation fines up to $250,000 per violation day."
+    )
+    
+    chunks_added = rag.ingest_document(text, doc_name="EnvCompliance")
+    
+    assert chunks_added > 0
+    # Check that FAISS index files are saved on disk
+    assert os.path.exists(os.path.join(index_dir, "index.faiss"))
+    assert os.path.exists(os.path.join(index_dir, "index.pkl"))
+
+def test_rag_semantic_retrieval(tmp_path):
+    """
+    Behavior 2: ComplianceRAG must perform semantic similarity searches
+    and return correct retrieved chunks matching a natural query.
+    """
+    from models.rag_pipeline import ComplianceRAG
+    index_dir = str(tmp_path / "faiss_index")
+    rag = ComplianceRAG(index_dir=index_dir)
+    
+    text = "Statutory remediation fines are evaluated at $250,000 per violation day for corporate discharge."
+    rag.ingest_document(text, doc_name="FineMandate")
+    
+    # Query semantically (discharge limits matches discharge, fines matches fines)
+    results = rag.db.similarity_search("statutory remediation fines", k=1)
+    
+    assert len(results) == 1
+    assert "remediation fines" in results[0].page_content
+    assert results[0].metadata["source"] == "FineMandate"
+
+def test_rag_offline_fallback_generation(tmp_path):
+    """
+    Behavior 3: ComplianceRAG must automatically trigger the local fallback generator
+    when no Groq API Key is present, returning a formatted markdown report.
+    """
+    from models.rag_pipeline import ComplianceRAG
+    index_dir = str(tmp_path / "faiss_index")
+    rag = ComplianceRAG(index_dir=index_dir)
+    
+    text = "Statutory remediation fines are evaluated at $250,000 per violation day for corporate discharge."
+    rag.ingest_document(text, doc_name="FineMandate")
+    
+    # Query with empty API key to force local synthesizer report
+    res = rag.query("What is the cost of corporate discharge violations?", groq_api_key="")
+    
+    assert res["mode"] == "fallback"
+    assert len(res["retrieved_chunks"]) > 0
+    assert "# RAG Compliance Summary Report" in res["answer"]
+    assert "### Question Asked" in res["answer"]
+    assert "FineMandate" in res["answer"]
+    assert "remediation fines" in res["answer"]
+
+def test_rag_online_generation_mocked(tmp_path):
+    """
+    Behavior 4: ComplianceRAG should call the Groq completions API and return conversational
+    LLM answers under online mode when a valid API key is present.
+    """
+    from unittest.mock import patch, MagicMock
+    from models.rag_pipeline import ComplianceRAG
+    
+    index_dir = str(tmp_path / "faiss_index")
+    rag = ComplianceRAG(index_dir=index_dir)
+    
+    text = "Statutory remediation fines are evaluated at $250,000 per violation day for corporate discharge."
+    rag.ingest_document(text, doc_name="FineMandate")
+    
+    # Mock Groq client and create completion response structure
+    mock_client = MagicMock()
+    mock_choice = MagicMock()
+    mock_choice.message.content = "According to Section 402, corporate facilities face up to $250,000 in remediation fines."
+    mock_client.chat.completions.create.return_value.choices = [mock_choice]
+    
+    with patch("groq.Groq", return_value=mock_client):
+        # Query with API key, causing it to trigger the online path
+        res = rag.query("What is the cost of corporate discharge violations?", groq_api_key="mock_key_123")
+        
+        assert res["mode"] == "online"
+        assert len(res["retrieved_chunks"]) > 0
+        assert res["answer"] == "According to Section 402, corporate facilities face up to $250,000 in remediation fines."
+        # Verify Groq chat completions create was indeed called
+        mock_client.chat.completions.create.assert_called_once()
+
+def test_cli_query_resilience():
+    """
+    Behavior 5: Running the CLI query mode without a --question argument must fail with a clear error.
+    """
+    import subprocess
+    import sys
+    
+    python_bin = sys.executable
+    cmd = [python_bin, "main.py", "--mode", "query"]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    assert result.returncode != 0
+    assert "Error: --question <question_text> is required in query mode." in result.stdout or "Error: --question <question_text> is required in query mode." in result.stderr
+
+def test_cli_query_successful_run(tmp_path):
+    """
+    Behavior 5: Running the CLI query mode with a valid question must output RAG responses cleanly.
+    """
+    import os
+    import subprocess
+    import sys
+    from models.rag_pipeline import ComplianceRAG
+    
+    # Ingest text to default index so CLI can load it (clean default faiss_index)
+    # We will override the default index path temporarily or just let it write to data/faiss_index
+    # To prevent side effects on dev environment, let's patch the CLI or run it on the default index
+    default_index = "data/faiss_index"
+    rag = ComplianceRAG(index_dir=default_index)
+    
+    text = "The SEC requires corporate disclosures for executive stock sales within 48 hours."
+    rag.ingest_document(text, doc_name="SECDeadline")
+    
+    python_bin = sys.executable
+    cmd = [python_bin, "main.py", "--mode", "query", "--question", "What is the SEC executive sales disclosure deadline?"]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    assert result.returncode == 0
+    assert "--- RAG Query Response ---" in result.stdout
+    assert "SECDeadline" in result.stdout
+    assert "48 hours" in result.stdout
+    
+    # Clean up index
+    try:
+        import shutil
+        shutil.rmtree(default_index)
+    except Exception:
+        pass
+
+
+
+
+
 
 
 

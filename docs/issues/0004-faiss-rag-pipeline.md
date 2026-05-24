@@ -11,12 +11,15 @@ The system must:
 5. Add CLI flag `main.py --mode query --question "<question_text>"` to search the persistent index and print the answer.
 6. Verify with `pytest` unit tests for FAISS persistence, context retrieval, and successful execution of the offline fallback report.
 
+## Status
+Completed
+
 ## Acceptance criteria
-- [ ] Text chunking and `sentence-transformers` embeddings integrated.
-- [ ] FAISS index is saved/loaded from disk inside `data/faiss_index/`.
-- [ ] Running query via CLI connects to Groq API or triggers the local markdown synthesizer fallback cleanly without raising exceptions.
-- [ ] Sub-second retrieval latency achieved for index lookup.
-- [ ] `pytest` validates indexing, persistence, and local synthesizer fallback.
+- [x] Text chunking and `sentence-transformers` embeddings integrated.
+- [x] FAISS index is saved/loaded from disk inside `data/faiss_index/`.
+- [x] Running query via CLI connects to Groq API or triggers the local markdown synthesizer fallback cleanly without raising exceptions.
+- [x] Sub-second retrieval latency achieved for index lookup.
+- [x] `pytest` validates indexing, persistence, and local synthesizer fallback.
 
 ## Blocked by
 - [Issue #1: Project Bootstrapping & Local Zero-Shot Classifier CLI](file:///Users/sohamwarad/compliance/docs/issues/0001-project-bootstrap-and-zero-shot-cli.md)

@@ -77,8 +77,28 @@ def main():
         print("Training mode is not yet implemented. Run this in Slice 5.")
         sys.exit(0)
     elif args.mode == "query":
-        print("Query mode is not yet implemented. Run this in Slice 4.")
-        sys.exit(0)
+        if not args.question:
+            print("Error: --question <question_text> is required in query mode.")
+            sys.exit(1)
+            
+        print("Initializing RAG pipeline and loading vector index...")
+        try:
+            from models.rag_pipeline import ComplianceRAG
+            rag = ComplianceRAG()
+            
+            print(f"Running semantic query for: '{args.question}'...")
+            result = rag.query(args.question)
+            
+            print("\n--- RAG Query Response ---")
+            print(result["answer"])
+            print("--------------------------")
+            
+            if result["retrieved_chunks"]:
+                print(f"\n[Retrieved {len(result['retrieved_chunks'])} relevant context passage(s)]")
+            sys.exit(0)
+        except Exception as e:
+            print(f"Error: RAG Query failed: {e}")
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()
